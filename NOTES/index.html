@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="tg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>ZEROHUBUI NOTES</title>
+<link rel="icon" href="icon.png" type="image/png">
+<style>
+  :root{
+    --bg:#050508;
+    --surface:#0d0d14;
+    --surface-2:#12121b;
+    --border:#22222e;
+    --pink:#ff1f6d;
+    --pink-dim:#7a1339;
+    --purple:#a238ff;
+    --cyan:#00e6ff;
+    --text:#f2f2f5;
+    --text-dim:#83839a;
+    --danger:#ff3b3b;
+    --radius-cut:14px;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", "Roboto Mono", monospace;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background:var(--bg);
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 34px 34px;
+    background-position: -1px -1px;
+    color:var(--text);
+    font-family:var(--font-body);
+    overflow-x:hidden;
+    min-height:100%;
+    padding-bottom: 40px;
+  }
+
+  ::selection{ background:var(--pink); color:#000; }
+
+  /* ---------- header ---------- */
+  header{
+    position:sticky; top:0; z-index:20;
+    background:rgba(5,5,8,0.92);
+    border-bottom:2px solid var(--pink-dim);
+    padding: 14px 16px 12px;
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    font-family:var(--font-mono);
+    font-weight:700;
+    letter-spacing:1px;
+    font-size:15px;
+  }
+  .brand .dot{
+    width:9px; height:9px; background:var(--cyan);
+    clip-path: polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%);
+    box-shadow: 0 0 8px var(--cyan);
+    flex:none;
+  }
+  .brand span.hub{ color:var(--pink); }
+  .brand span.notes{ color:var(--text-dim); font-weight:500; }
+
+  .crumbs{
+    margin-top:10px;
+    display:flex; align-items:center; flex-wrap:wrap; gap:6px;
+    font-family:var(--font-mono);
+    font-size:12.5px;
+    color:var(--text-dim);
+    min-height:20px;
+  }
+  .crumbs .crumb{
+    cursor:pointer; color:var(--text-dim);
+    padding:2px 4px;
+    border-bottom:1px dashed transparent;
+  }
+  .crumbs .crumb:hover, .crumbs .crumb:active{ color:var(--cyan); border-color:var(--cyan); }
+  .crumbs .crumb.current{ color:var(--pink); font-weight:600; }
+  .crumbs .sep{ color:var(--border); }
+
+  /* ---------- search ---------- */
+  .search-bar{
+    margin-top:10px;
+    display:flex; align-items:center; gap:8px;
+    background:var(--surface);
+    border:1.5px solid var(--border);
+    padding:8px 10px;
+  }
+  .search-bar:focus-within{ border-color:var(--cyan); }
+  .search-bar svg{ width:16px; height:16px; flex:none; color:var(--text-dim); }
+  .search-bar input{
+    flex:1; background:transparent; border:none; outline:none;
+    color:var(--text); font-size:13.5px; font-family:var(--font-body);
+    min-width:0;
+  }
+  .search-bar input::placeholder{ color:var(--text-dim); }
+  .search-bar .clear-x{
+    color:var(--text-dim); cursor:pointer; font-size:15px; padding:0 2px;
+    display:none;
+  }
+  .search-bar .clear-x.show{ display:block; }
+
+  .search-results-label{
+    font-family:var(--font-mono); font-size:11px; color:var(--text-dim);
+    text-transform:uppercase; letter-spacing:.5px;
+    margin:0 0 10px 2px;
+  }
+  .search-results-label b{ color:var(--cyan); }
+
+  .result-row{
+    display:flex; align-items:center; gap:10px;
+    background:var(--surface);
+    border:1.5px solid var(--border);
+    border-left:3px solid var(--pink-dim);
+    padding:10px 12px;
+    margin-bottom:8px;
+    cursor:pointer;
+  }
+  .result-row:active{ border-left-color:var(--pink); }
+  .result-row.folder-result{ border-left-color:rgba(162,56,255,0.6); }
+  .result-row .icon{ width:18px; height:18px; flex:none; color:var(--text-dim); }
+  .result-row .rtext{ min-width:0; flex:1; }
+  .result-row .rname{ font-size:13.5px; font-weight:600; word-break:break-word; }
+  .result-row.folder-result .rname{ color:var(--purple); }
+  .result-row .rpath{
+    font-family:var(--font-mono); font-size:10.5px; color:var(--text-dim);
+    margin-top:2px; word-break:break-all;
+  }
+  .result-row .rsnippet{
+    font-size:11.5px; color:var(--text-dim); margin-top:3px;
+    overflow:hidden; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical;
+  }
+  mark{ background:transparent; color:var(--cyan); font-weight:700; }
+
+  /* ---------- grid ---------- */
+  main{ padding:16px; max-width:720px; margin:0 auto; }
+
+  .empty{
+    margin-top:60px;
+    text-align:center;
+    color:var(--text-dim);
+    font-family:var(--font-mono);
+    font-size:13px;
+    line-height:1.8;
+  }
+  .empty .big{
+    font-size:34px; color:var(--pink);
+    display:block; margin-bottom:10px;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap:12px;
+  }
+
+  .card{
+    position:relative;
+    background:var(--surface);
+    border:1.5px solid var(--border);
+    clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+    padding:14px 12px 12px;
+    min-height:96px;
+    cursor:pointer;
+    display:flex; flex-direction:column; gap:8px;
+    transition: border-color .12s ease, transform .08s ease;
+  }
+  .card:active{ transform: scale(0.97); }
+  .card.folder{ border-color: rgba(162,56,255,0.4); }
+  .card.folder:active, .card.folder:hover{ border-color:var(--purple); }
+  .card.note{ border-color: rgba(255,31,109,0.35); }
+  .card.note:active, .card.note:hover{ border-color:var(--pink); }
+
+  .card .icon{ width:20px; height:20px; flex:none; }
+  .card .name{
+    font-weight:600; font-size:13.5px;
+    word-break:break-word;
+    line-height:1.3;
+  }
+  .card.folder .name{ color:var(--purple); }
+  .card.note .name{ color:var(--text); }
+  .card .preview{
+    font-size:11.5px; color:var(--text-dim);
+    line-height:1.4;
+    overflow:hidden;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+  }
+  .card .meta{
+    margin-top:auto;
+    font-family:var(--font-mono);
+    font-size:10px; color:var(--text-dim);
+    opacity:.7;
+  }
+
+  /* ---------- fab ---------- */
+  .fab{
+    position:fixed; top:14px; right:16px; z-index:30;
+    width:42px; height:42px;
+    background:var(--pink);
+    color:#0a0a0a;
+    border:none;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    font-size:24px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 0 0 2px rgba(255,31,109,0.25), 0 0 16px rgba(255,31,109,0.55);
+    cursor:pointer;
+  }
+  .fab:active{ transform: scale(0.92); }
+
+  /* ---------- modal ---------- */
+  .overlay{
+    position:fixed; inset:0; z-index:40;
+    background:rgba(3,3,6,0.86);
+    display:none;
+    align-items:flex-end;
+    justify-content:center;
+  }
+  .overlay.show{ display:flex; }
+  @media (min-width:600px){
+    .overlay{ align-items:center; }
+  }
+
+  .sheet{
+    width:100%; max-width:520px;
+    background:var(--surface-2);
+    border:1.5px solid var(--pink-dim);
+    border-bottom:none;
+    clip-path: polygon(18px 0, 100% 0, 100% 100%, 0 100%, 0 18px);
+    padding:20px 18px 22px;
+    max-height:88vh;
+    overflow-y:auto;
+    animation: rise .16s ease-out;
+  }
+  @media (min-width:600px){
+    .sheet{ border-bottom:1.5px solid var(--pink-dim); clip-path:none; border-radius:2px; }
+  }
+  @keyframes rise{ from{ transform:translateY(24px); opacity:0;} to{ transform:translateY(0); opacity:1;} }
+
+  .sheet h2{
+    margin:0 0 4px; font-size:15px; font-family:var(--font-mono);
+    color:var(--pink); letter-spacing:.5px;
+  }
+  .sheet .hint{
+    font-size:11.5px; color:var(--text-dim); margin-bottom:14px; line-height:1.5;
+  }
+  .sheet .hint b{ color:var(--cyan); font-weight:600; }
+
+  label{
+    display:block; font-size:11px; font-family:var(--font-mono);
+    color:var(--text-dim); margin:12px 0 6px; text-transform:uppercase; letter-spacing:.5px;
+  }
+  input[type=text], textarea{
+    width:100%;
+    background:var(--bg);
+    border:1.5px solid var(--border);
+    color:var(--text);
+    font-family:var(--font-body);
+    font-size:14.5px;
+    padding:11px 12px;
+    outline:none;
+    resize:vertical;
+  }
+  input[type=text]:focus, textarea:focus{ border-color:var(--pink); }
+  textarea{ min-height:160px; line-height:1.6; }
+
+  .row{ display:flex; gap:10px; margin-top:18px; }
+  button.btn{
+    flex:1;
+    padding:12px 14px;
+    border:1.5px solid var(--border);
+    background:transparent;
+    color:var(--text);
+    font-family:var(--font-mono);
+    font-size:12.5px;
+    letter-spacing:.5px;
+    text-transform:uppercase;
+    cursor:pointer;
+  }
+  button.btn.primary{ background:var(--pink); border-color:var(--pink); color:#0a0a0a; font-weight:700; }
+  button.btn.primary:active{ opacity:.85; }
+  button.btn.ghost:active{ border-color:var(--text-dim); }
+  button.btn.danger{ color:var(--danger); border-color:var(--danger); }
+
+  /* ---------- view note ---------- */
+  .view-title{
+    font-size:19px; font-weight:700; color:var(--text);
+    word-break:break-word; margin-bottom:4px;
+  }
+  .view-path{
+    font-family:var(--font-mono); font-size:10.5px; color:var(--text-dim);
+    margin-bottom:16px; word-break:break-all;
+  }
+  .view-content{
+    white-space:pre-wrap; word-break:break-word;
+    font-size:14.5px; line-height:1.75; color:var(--text);
+    border-top:1px solid var(--border);
+    padding-top:14px;
+  }
+  .icon-btn{
+    width:34px; height:34px;
+    border:1.5px solid var(--border);
+    background:transparent; color:var(--text-dim);
+    display:inline-flex; align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+  .icon-btn:active{ border-color:var(--pink); color:var(--pink); }
+  .view-actions{ display:flex; gap:8px; margin-bottom:6px; justify-content:flex-end; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="dot"></span>
+    <span class="hub">ZEROHUBUI</span><span class="notes">&nbsp;NOTES</span>
+  </div>
+  <div class="crumbs" id="crumbs"></div>
+  <div class="search-bar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+    <input type="text" id="searchInput" placeholder="Ҷустуҷӯ дар ҳамаи папкаҳо ва ёддоштҳо..." autocomplete="off">
+    <span class="clear-x" id="searchClear">✕</span>
+  </div>
+</header>
+
+<main>
+  <div id="gridWrap"></div>
+</main>
+
+<button class="fab" id="fabAdd" aria-label="Иловаи чизи нав">+</button>
+
+<!-- Create modal -->
+<div class="overlay" id="createOverlay">
+  <div class="sheet">
+    <h2>ЧИЗИ НАВ</h2>
+    <div class="hint">
+      Барои сохтани папка аломати <b>/</b> истифода баред. Масалан: <b>ПАПКАИ МАН/ман</b> — папкаи "ПАПКАИ МАН"-ро месозад ва дар дохилаш ёддошти "ман"-ро мегузорад. Якчанд <b>/</b> метавонед гузоред: <b>Папка/Зерпапка/Ном</b>.
+    </div>
+    <label>Ном / Роҳ</label>
+    <input type="text" id="nameInput" placeholder="масалан: ПАПКАИ МАН/ман" autocomplete="off">
+    <label>Матн</label>
+    <textarea id="contentInput" placeholder="Матни худро нависед..."></textarea>
+    <div class="row">
+      <button class="btn ghost" id="cancelCreate">Бекор кардан</button>
+      <button class="btn primary" id="saveCreate">Нигоҳ дор</button>
+    </div>
+  </div>
+</div>
+
+<!-- View / edit modal -->
+<div class="overlay" id="viewOverlay">
+  <div class="sheet">
+    <div class="view-actions">
+      <button class="icon-btn" id="editBtn" title="Таҳрир">✎</button>
+      <button class="icon-btn" id="deleteBtn" title="Нест кардан">🗑</button>
+      <button class="icon-btn" id="closeViewBtn" title="Пӯшидан">✕</button>
+    </div>
+    <div id="viewMode">
+      <div class="view-title" id="viewTitle"></div>
+      <div class="view-path" id="viewPath"></div>
+      <div class="view-content" id="viewContent"></div>
+    </div>
+    <div id="editMode" style="display:none;">
+      <label>Ном</label>
+      <input type="text" id="editNameInput">
+      <label>Матн</label>
+      <textarea id="editContentInput"></textarea>
+      <div class="row">
+        <button class="btn ghost" id="cancelEdit">Бекор кардан</button>
+        <button class="btn primary" id="saveEdit">Нигоҳ дор</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var STORAGE_KEY = "zerohubui_notes_data_v1";
+  var nodes = [];          // flat list: {id, name, type:'folder'|'note', parentId, content, updatedAt}
+  var currentFolderId = null;
+  var openNoteId = null;
+
+  function uid(){ return 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+
+  function load(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      nodes = raw ? JSON.parse(raw) : [];
+    }catch(e){ nodes = []; }
+  }
+  function save(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(nodes));
+  }
+
+  function childrenOf(parentId){
+    return nodes.filter(function(n){ return n.parentId === parentId; })
+      .sort(function(a,b){
+        if(a.type !== b.type) return a.type === 'folder' ? -1 : 1;
+        return a.name.localeCompare(b.name, 'ru');
+      });
+  }
+  function countInside(folderId){
+    return nodes.filter(function(n){ return n.parentId === folderId; }).length;
+  }
+  function findById(id){ return nodes.find(function(n){ return n.id === id; }); }
+
+  function pathChain(id){
+    var chain = [];
+    var cur = id;
+    while(cur){
+      var n = findById(cur);
+      if(!n) break;
+      chain.unshift(n);
+      cur = n.parentId;
+    }
+    return chain;
+  }
+
+  // ---------- rendering ----------
+  var gridWrap = document.getElementById('gridWrap');
+  var crumbsEl = document.getElementById('crumbs');
+  var searchInput = document.getElementById('searchInput');
+  var searchClear = document.getElementById('searchClear');
+  var searchQuery = '';
+
+  function renderCrumbs(){
+    crumbsEl.innerHTML = '';
+    var home = document.createElement('span');
+    home.className = 'crumb' + (currentFolderId === null ? ' current' : '');
+    home.textContent = 'Асосӣ';
+    home.onclick = function(){ currentFolderId = null; render(); };
+    crumbsEl.appendChild(home);
+
+    var chain = pathChain(currentFolderId);
+    chain.forEach(function(n, idx){
+      var sep = document.createElement('span');
+      sep.className = 'sep'; sep.textContent = '/';
+      crumbsEl.appendChild(sep);
+      var c = document.createElement('span');
+      c.className = 'crumb' + (idx === chain.length-1 ? ' current' : '');
+      c.textContent = n.name;
+      c.onclick = function(){ currentFolderId = n.id; render(); };
+      crumbsEl.appendChild(c);
+    });
+  }
+
+  function svgFolder(){
+    return '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6z"/></svg>';
+  }
+  function svgNote(){
+    return '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5"/><path d="M8 13h8M8 17h5"/></svg>';
+  }
+
+  function render(){
+    if(searchQuery.trim().length > 0){
+      renderSearchResults(searchQuery.trim());
+      return;
+    }
+    renderCrumbs();
+    var items = childrenOf(currentFolderId);
+    gridWrap.innerHTML = '';
+    if(items.length === 0){
+      var empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.innerHTML = '<span class="big">+</span>Ин ҷо холӣ аст.<br>Бо тугмаи болои рост чизи нав илова кунед.';
+      gridWrap.appendChild(empty);
+      return;
+    }
+    var grid = document.createElement('div');
+    grid.className = 'grid';
+    items.forEach(function(n){
+      var card = document.createElement('div');
+      card.className = 'card ' + (n.type === 'folder' ? 'folder' : 'note');
+      if(n.type === 'folder'){
+        var cnt = countInside(n.id);
+        card.innerHTML = svgFolder() +
+          '<div class="name">'+escapeHtml(n.name)+'</div>' +
+          '<div class="meta">'+cnt+' чиз</div>';
+        card.onclick = function(){ currentFolderId = n.id; render(); };
+      } else {
+        var preview = (n.content || '').trim();
+        card.innerHTML = svgNote() +
+          '<div class="name">'+escapeHtml(n.name)+'</div>' +
+          '<div class="preview">'+escapeHtml(preview || '(холӣ)')+'</div>';
+        card.onclick = function(){ openViewer(n.id); };
+      }
+      grid.appendChild(card);
+    });
+    gridWrap.appendChild(grid);
+  }
+
+  function escapeHtml(str){
+    var d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  function highlight(str, q){
+    var esc = escapeHtml(str);
+    if(!q) return esc;
+    var escQ = escapeHtml(q);
+    try{
+      var re = new RegExp('(' + escQ.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'ig');
+      return esc.replace(re, '<mark>$1</mark>');
+    }catch(e){ return esc; }
+  }
+
+  function snippetAround(text, q){
+    var lower = text.toLowerCase();
+    var idx = lower.indexOf(q.toLowerCase());
+    if(idx === -1) return text.slice(0, 80);
+    var start = Math.max(0, idx - 25);
+    var end = Math.min(text.length, idx + q.length + 45);
+    return (start > 0 ? '…' : '') + text.slice(start, end) + (end < text.length ? '…' : '');
+  }
+
+  function renderSearchResults(q){
+    crumbsEl.innerHTML = '';
+    var label = document.createElement('span');
+    label.className = 'crumb current';
+    label.textContent = 'Ҷустуҷӯ';
+    crumbsEl.appendChild(label);
+
+    var ql = q.toLowerCase();
+    var matches = nodes.filter(function(n){
+      var nameHit = n.name.toLowerCase().indexOf(ql) !== -1;
+      var contentHit = n.type === 'note' && (n.content || '').toLowerCase().indexOf(ql) !== -1;
+      return nameHit || contentHit;
+    });
+
+    gridWrap.innerHTML = '';
+
+    var lbl = document.createElement('div');
+    lbl.className = 'search-results-label';
+    lbl.innerHTML = matches.length + ' <b>натиҷа</b> барои "' + escapeHtml(q) + '"';
+    gridWrap.appendChild(lbl);
+
+    if(matches.length === 0){
+      var empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.innerHTML = '<span class="big">∅</span>Чизе ёфт нашуд.';
+      gridWrap.appendChild(empty);
+      return;
+    }
+
+    matches.forEach(function(n){
+      var chain = pathChain(n.parentId);
+      var pathStr = chain.length ? chain.map(function(c){return c.name;}).join(' / ') : 'Асосӣ';
+      var row = document.createElement('div');
+      row.className = 'result-row ' + (n.type === 'folder' ? 'folder-result' : 'note-result');
+
+      var nameHtml = highlight(n.name, q);
+      var extra = '';
+      if(n.type === 'note'){
+        var contentLower = (n.content || '').toLowerCase();
+        if(n.name.toLowerCase().indexOf(ql) === -1 && contentLower.indexOf(ql) !== -1){
+          extra = '<div class="rsnippet">' + highlight(snippetAround(n.content, q), q) + '</div>';
+        }
+      }
+
+      row.innerHTML =
+        (n.type === 'folder' ? svgFolder() : svgNote()) +
+        '<div class="rtext">' +
+          '<div class="rname">' + nameHtml + '</div>' +
+          '<div class="rpath">' + escapeHtml(pathStr) + '</div>' +
+          extra +
+        '</div>';
+
+      row.onclick = function(){
+        if(n.type === 'folder'){
+          currentFolderId = n.id;
+          clearSearch();
+        } else {
+          currentFolderId = n.parentId;
+          openViewer(n.id);
+        }
+      };
+      gridWrap.appendChild(row);
+    });
+  }
+
+  function clearSearch(){
+    searchQuery = '';
+    searchInput.value = '';
+    searchClear.classList.remove('show');
+    render();
+  }
+
+  searchInput.addEventListener('input', function(){
+    searchQuery = searchInput.value;
+    searchClear.classList.toggle('show', searchQuery.length > 0);
+    render();
+  });
+  searchClear.addEventListener('click', clearSearch);
+
+  // ---------- create flow ----------
+  var createOverlay = document.getElementById('createOverlay');
+  var nameInput = document.getElementById('nameInput');
+  var contentInput = document.getElementById('contentInput');
+
+  document.getElementById('fabAdd').onclick = function(){
+    nameInput.value = '';
+    contentInput.value = '';
+    createOverlay.classList.add('show');
+    setTimeout(function(){ nameInput.focus(); }, 50);
+  };
+  document.getElementById('cancelCreate').onclick = function(){
+    createOverlay.classList.remove('show');
+  };
+  createOverlay.onclick = function(e){
+    if(e.target === createOverlay) createOverlay.classList.remove('show');
+  };
+
+  document.getElementById('saveCreate').onclick = function(){
+    var raw = nameInput.value;
+    var segments = raw.split('/').map(function(s){ return s.trim(); }).filter(function(s){ return s.length>0; });
+    if(segments.length === 0){
+      nameInput.focus();
+      return;
+    }
+    var folderSegments = segments.slice(0, -1);
+    var leafName = segments[segments.length - 1];
+
+    var parent = currentFolderId;
+    folderSegments.forEach(function(segName){
+      var existing = nodes.find(function(n){
+        return n.parentId === parent && n.type === 'folder' && n.name === segName;
+      });
+      if(existing){
+        parent = existing.id;
+      } else {
+        var folder = {
+          id: uid(), name: segName, type: 'folder',
+          parentId: parent, content: '', updatedAt: Date.now()
+        };
+        nodes.push(folder);
+        parent = folder.id;
+      }
+    });
+
+    var note = {
+      id: uid(), name: leafName, type: 'note',
+      parentId: parent, content: contentInput.value, updatedAt: Date.now()
+    };
+    nodes.push(note);
+    save();
+    createOverlay.classList.remove('show');
+    render();
+  };
+
+  // ---------- view / edit / delete ----------
+  var viewOverlay = document.getElementById('viewOverlay');
+  var viewMode = document.getElementById('viewMode');
+  var editMode = document.getElementById('editMode');
+  var viewTitle = document.getElementById('viewTitle');
+  var viewPath = document.getElementById('viewPath');
+  var viewContent = document.getElementById('viewContent');
+  var editNameInput = document.getElementById('editNameInput');
+  var editContentInput = document.getElementById('editContentInput');
+
+  function openViewer(id){
+    openNoteId = id;
+    var n = findById(id);
+    if(!n) return;
+    viewTitle.textContent = n.name;
+    var chain = pathChain(n.parentId);
+    viewPath.textContent = chain.length ? chain.map(function(c){return c.name;}).join(' / ') : 'Асосӣ';
+    viewContent.textContent = n.content || '(матн холӣ аст)';
+    viewMode.style.display = '';
+    editMode.style.display = 'none';
+    viewOverlay.classList.add('show');
+  }
+
+  document.getElementById('closeViewBtn').onclick = function(){
+    viewOverlay.classList.remove('show');
+    openNoteId = null;
+  };
+  viewOverlay.onclick = function(e){
+    if(e.target === viewOverlay){ viewOverlay.classList.remove('show'); openNoteId = null; }
+  };
+
+  document.getElementById('editBtn').onclick = function(){
+    var n = findById(openNoteId);
+    if(!n) return;
+    editNameInput.value = n.name;
+    editContentInput.value = n.content || '';
+    viewMode.style.display = 'none';
+    editMode.style.display = '';
+  };
+  document.getElementById('cancelEdit').onclick = function(){
+    viewMode.style.display = '';
+    editMode.style.display = 'none';
+  };
+  document.getElementById('saveEdit').onclick = function(){
+    var n = findById(openNoteId);
+    if(!n) return;
+    var newName = editNameInput.value.trim();
+    if(newName.length === 0){ editNameInput.focus(); return; }
+    n.name = newName;
+    n.content = editContentInput.value;
+    n.updatedAt = Date.now();
+    save();
+    render();
+    openViewer(n.id);
+  };
+  document.getElementById('deleteBtn').onclick = function(){
+    var n = findById(openNoteId);
+    if(!n) return;
+    if(!confirm('"' + n.name + '"-ро нест мекунед?')) return;
+    removeNodeAndChildren(n.id);
+    save();
+    viewOverlay.classList.remove('show');
+    openNoteId = null;
+    render();
+  };
+
+  function removeNodeAndChildren(id){
+    var toRemove = [id];
+    var i = 0;
+    while(i < toRemove.length){
+      var pid = toRemove[i];
+      nodes.filter(function(n){ return n.parentId === pid; })
+        .forEach(function(c){ toRemove.push(c.id); });
+      i++;
+    }
+    nodes = nodes.filter(function(n){ return toRemove.indexOf(n.id) === -1; });
+  }
+
+  // ---------- init ----------
+  load();
+  render();
+})();
+</script>
+</body>
+</html>
