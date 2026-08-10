@@ -17,24 +17,12 @@
     #intro-overlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
-      opacity: 1;
-      visibility: visible;
+      opacity: 1; visibility: visible;
       transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s ease;
     }
-    #intro-overlay.fade-out {
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-    }
-    
-    #intro-video { 
-      width: 100%; 
-      height: 100%; 
-      object-fit: contain; 
-      background: #000;
-    }
+    #intro-overlay.fade-out { opacity: 0; visibility: hidden; pointer-events: none; }
+    #intro-video { width: 100%; height: 100%; object-fit: contain; background: #000; }
 
-    /* Тугмаи хонамонанд дар поёни интро */
     #home-intro-btn {
       position: absolute; bottom: 30px;
       background: rgba(255, 255, 255, 0.15); color: #fff;
@@ -50,11 +38,21 @@
 
     /* Container & Mobile Layout */
     .container { width: 100%; max-width: 480px; margin: 0 auto; padding: 16px; }
-    .header { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 20px; margin-top: 6px; }
+    .header { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; margin-bottom: 20px; margin-top: 6px; }
+    .header-logo { display: flex; align-items: center; gap: 10px; }
     .header img { width: 38px; height: 38px; border-radius: 10px; object-fit: cover; }
     .header h1 { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, #ff416c, #ff4b2b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-    /* Cards - Адаптивӣ барои телефон */
+    /* Server Status Badge */
+    #server-status {
+      font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 20px;
+      background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffcc00; display: flex; align-items: center; gap: 6px; transition: all 0.3s;
+    }
+    #server-status.online { color: #00ff88; border-color: rgba(0, 255, 136, 0.3); background: rgba(0, 255, 136, 0.1); }
+    #server-status.offline { color: #ff4b2b; border-color: rgba(255, 75, 43, 0.3); background: rgba(255, 75, 43, 0.1); }
+
+    /* Cards */
     .card { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 14px; margin-bottom: 14px; backdrop-filter: blur(10px); }
     .card label { font-size: 12px; color: #aaa; display: block; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
     
@@ -88,12 +86,16 @@
     .modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 8888; backdrop-filter: blur(10px); padding: 12px; }
     .modal-content { background: #12121a; border: 1px solid rgba(255,255,255,0.15); border-radius: 18px; width: 100%; max-width: 500px; padding: 12px; position: relative; }
     .close-modal { position: absolute; top: -38px; right: 4px; color: #fff; font-size: 30px; cursor: pointer; font-weight: bold; }
-    
     .player-wrapper { position: relative; width: 100%; padding-bottom: 56.25%; height: 0; border-radius: 12px; overflow: hidden; background: #000; }
     .player-wrapper iframe, .player-wrapper video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
 
-    /* Toast Notification */
-    #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #ff4b2b; color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 600; display: none; z-index: 10000; box-shadow: 0 4px 15px rgba(255,75,43,0.4); text-align: center; white-space: nowrap; }
+    /* Toast Alert (Боварӣ ҳосил мекунем, ки дар боло меистад) */
+    #toast { 
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); 
+      background: #ff4b2b; color: #fff; padding: 12px 24px; border-radius: 25px; 
+      font-size: 13px; font-weight: 700; display: none; z-index: 20000; 
+      box-shadow: 0 6px 20px rgba(0,0,0,0.6); text-align: center; white-space: nowrap; 
+    }
   </style>
 </head>
 <body>
@@ -103,15 +105,18 @@
     <video id="intro-video" autoplay muted playsinline>
       <source src="intro.mp4" type="video/mp4">
     </video>
-    <!-- Тугмаи хонамонанд дар поёни интро -->
     <button id="home-intro-btn">🏠 Ба саҳифаи асосӣ</button>
   </div>
 
   <!-- MAIN APP CONTAINER -->
   <div class="container">
     <div class="header">
-      <img src="icon.png" alt="Icon" onerror="this.style.display='none'">
-      <h1>ZEROHUB UI</h1>
+      <div class="header-logo">
+        <img src="icon.png" alt="Icon" onerror="this.style.display='none'">
+        <h1>ZEROHUB UI</h1>
+      </div>
+      <!-- Индикатори ҳолати сервер -->
+      <div id="server-status">🟡 Санҷиши пайваст ба сервер...</div>
     </div>
 
     <!-- YouTube Link Input -->
@@ -149,26 +154,22 @@
 
   <!-- SCRIPTS -->
   <script>
-    // Идоракунии overlay-и intro: баъди тамом шудани видео ё пахши тугма — гузаштан ба саҳифаи асосӣ
+    // Intro Logic
     (function () {
       const overlay = document.getElementById('intro-overlay');
       const video = document.getElementById('intro-video');
       const homeBtn = document.getElementById('home-intro-btn');
 
       function goToMain() {
+        if (!overlay) return;
         overlay.classList.add('fade-out');
-        // Баъди анҷоми transition-и CSS (0.8s), overlay-ро пурра аз ҷараёни рендер хориҷ мекунем
-        setTimeout(() => {
-          overlay.style.display = 'none';
-        }, 850);
+        setTimeout(() => { overlay.style.display = 'none'; }, 850);
       }
 
       if (video) {
         video.addEventListener('ended', goToMain);
-        // Агар видео бор нашавад (масалан intro.mp4 ёфт нашуд), боз ҳам ба саҳифаи асосӣ гузарем
         video.addEventListener('error', goToMain);
       }
-
       if (homeBtn) {
         homeBtn.addEventListener('click', goToMain);
       }
