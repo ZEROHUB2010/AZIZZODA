@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="tg">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZEROHUB UI</title>
+  <style>
+    /* Базовые стили UI */
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: #0b0c10; color: #fff; min-height: 100vh; padding-bottom: 30px; }
+
+    /* Intro Overlay */
+    #intro-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.5s ease;
+    }
+    #intro-video { width: 100%; height: 100%; object-fit: cover; }
+    #skip-intro-btn {
+      position: absolute; top: 20px; right: 20px;
+      background: rgba(0,0,0,0.6); color: #fff; border: 1px solid rgba(255,255,255,0.3);
+      padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 14px; backdrop-filter: blur(5px);
+    }
+
+    /* Container & Cards */
+    .container { max-width: 500px; margin: 0 auto; padding: 20px; }
+    .header { text-align: center; margin-bottom: 24px; font-size: 24px; font-weight: bold; color: #ff4b2b; }
+    .card { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 16px; margin-bottom: 20px; }
+    .input-group { display: flex; gap: 8px; margin-top: 10px; }
+    input[type="text"] {
+      flex: 1; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(0,0,0,0.4); color: #fff; font-size: 14px; outline: none;
+    }
+    button.btn {
+      padding: 12px 18px; border-radius: 10px; border: none; background: linear-gradient(135deg, #ff416c, #ff4b2b);
+      color: #fff; font-weight: bold; cursor: pointer; transition: opacity 0.2s;
+    }
+    button.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Results Grid */
+    .results-list { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+
+    /* Modal Player */
+    .modal {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 8888;
+    }
+    .modal-content { background: #1a1a24; border-radius: 16px; width: 90%; max-width: 500px; padding: 16px; position: relative; }
+    .close-modal { position: absolute; top: -35px; right: 0; color: #fff; font-size: 24px; cursor: pointer; }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: #ff4b2b; color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 14px;
+      display: none; z-index: 10000;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- INTRO VIDEO OVERLAY -->
+  <div id="intro-overlay">
+    <video id="intro-video" autoplay muted playsinline>
+      <source src="intro.mp4" type="video/mp4">
+    </video>
+    <button id="skip-intro-btn">Гузаштан ➔</button>
+  </div>
+
+  <!-- MAIN APP CONTAINER -->
+  <div class="container">
+    <div class="header">ZEROHUB UI</div>
+
+    <!-- URL Downloader Card -->
+    <div class="card">
+      <label>Скачать по ссылке</label>
+      <div class="input-group">
+        <input type="text" id="url-input" placeholder="Линки видеоро гузоред...">
+        <button class="btn" id="btn-analyze">Анализ</button>
+      </div>
+    </div>
+
+    <!-- Search Card -->
+    <div class="card">
+      <label>Поиск видео и музыки</label>
+      <div class="input-group">
+        <input type="text" id="search-input" placeholder="Номи видео ё суруд...">
+        <button class="btn" id="btn-search">Ҷустуҷӯ</button>
+      </div>
+    </div>
+
+    <!-- Results Container -->
+    <div id="results-list" class="results-list"></div>
+  </div>
+
+  <!-- MODAL VIDEO PLAYER -->
+  <div id="player-modal" class="modal">
+    <div class="modal-content">
+      <span id="close-modal" class="close-modal">&times;</span>
+      <div id="modal-player-body"></div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast"></div>
+
+  <!-- SCRIPTS CONNECTED IN CORRECT ORDER -->
+  <script src="api.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
