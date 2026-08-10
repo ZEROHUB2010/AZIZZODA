@@ -148,6 +148,32 @@
   <div id="toast"></div>
 
   <!-- SCRIPTS -->
+  <script>
+    // Идоракунии overlay-и intro: баъди тамом шудани видео ё пахши тугма — гузаштан ба саҳифаи асосӣ
+    (function () {
+      const overlay = document.getElementById('intro-overlay');
+      const video = document.getElementById('intro-video');
+      const homeBtn = document.getElementById('home-intro-btn');
+
+      function goToMain() {
+        overlay.classList.add('fade-out');
+        // Баъди анҷоми transition-и CSS (0.8s), overlay-ро пурра аз ҷараёни рендер хориҷ мекунем
+        setTimeout(() => {
+          overlay.style.display = 'none';
+        }, 850);
+      }
+
+      if (video) {
+        video.addEventListener('ended', goToMain);
+        // Агар видео бор нашавад (масалан intro.mp4 ёфт нашуд), боз ҳам ба саҳифаи асосӣ гузарем
+        video.addEventListener('error', goToMain);
+      }
+
+      if (homeBtn) {
+        homeBtn.addEventListener('click', goToMain);
+      }
+    })();
+  </script>
   <script src="api.js"></script>
   <script src="app.js"></script>
 </body>
