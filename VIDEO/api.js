@@ -1,31 +1,19 @@
 /**
- * ZEROHUB UI — API Layer (YouTube Optimized)
+ * ZEROHUB UI — API Layer (Powered by Private yt-dlp Server)
  */
+const SERVER_URL = "https://zerohub-bacend.onrender.com"; // Линки сервери Render-и ту
+
 const API = (() => {
 
-  // Функция барои кашидани ID-и видео аз линки YouTube
-  function extractYouTubeId(url) {
-    if (!url) return null;
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length === 11) ? match[2] : null;
-  }
-
-  // 1. ҶУСТУҶӮ ДАР YOUTUBE (SEARCH)
+  // 1. Ҷустуҷӯ дар YouTube
   async function search(query) {
     if (!query) return [];
     
     try {
-      // Истифодаи API-и кушода ва бе-CORS барои ҷустуҷӯ
       const res = await fetch(`https://api.v3.invidious.io/api/v1/search?q=${encodeURIComponent(query)}&type=video`);
-      
       if (!res.ok) throw new Error('Search API Error');
       const data = await res.json();
       
-      if (!Array.isArray(data) || data.length === 0) {
-        throw new Error('No results');
-      }
-
       return data.slice(0, 10).map(item => ({
         id: item.videoId,
         title: item.title || 'YouTube Video',
@@ -35,48 +23,36 @@ const API = (() => {
         embedUrl: `https://www.youtube.com/embed/${item.videoId}?autoplay=1`,
         directUrl: `https://www.youtube.com/watch?v=${item.videoId}`
       }));
-
     } catch (err) {
-      console.warn('Invidious API failed, using standard YouTube Embed Search Fallback:', err);
-      // Fallback: Агар API ҷавоб надиҳад, натиҷаро мустақиман омода мекунем, то интерфейс овезон намонад
-      return [
-        {
-          id: 'search_fallback',
-          title: `Ҷустуҷӯ дар YouTube: ${query}`,
-          source: 'YouTube Search',
-          duration: 'HD',
-          thumb: 'icon.png',
-          embedUrl: `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}`,
-          directUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`
-        }
-      ];
+      console.warn('Fallback Search:', err);
+      return [];
     }
   }
 
-  // 2. АНАЛИЗИ ЛИНКИ YOUTUBE (ANALYZE URL)
+  // 2. Таҳлил ва кашидани линки мустақим тавассути yt-dlp
   async function analyzeUrl(url) {
-    const videoId = extractYouTubeId(url);
-
-    if (videoId) {
-      return {
-        id: videoId,
-        title: `YouTube Video (${videoId})`,
-        source: 'YouTube Direct',
-        duration: 'HD Video',
-        thumb: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
-        embedUrl: `https://www.youtube.com/embed/${videoId}?autoplay=1`,
-        directUrl: `https://www.youtube.com/watch?v=${videoId}`
-      };
-    }
-
-    throw new Error('Линки нодурусти YouTube');
+    const res = await fetch(`${SERVER_URL}/api/get-download-link?url=${encodeURIComponent(url)}`);
+    if (!res.ok) throw new Error('Сервер видеоро коркард карда натавонист');
+    
+    const data = await res.json();
+    return {
+      id: 'ytdlp_res',
+      title: data.title,
+      source: 'yt-dlp Engine',
+      duration: data.duration,
+      thumb: data.thumbnail,
+      embedUrl: url.replace('watch?v=', 'embed/'),
+      downloadUrl: data.download_url // Линки мустақими файл
+    };
   }
 
-  // 3. ЗЕРКАШИИ ВИДЕО/МУСИҚӢ (DOWNLOAD)
+  // 3. Зеркашии мустақим
   function download(item) {
-    const targetUrl = item.directUrl || (item.id ? `https://www.youtube.com/watch?v=${item.id}` : item.embedUrl);
-    // Гузариш ба сервиси боэътимоди Cobalt барои зеркашӣ
-    window.open(`https://cobalt.tools/?url=${encodeURIComponent(targetUrl)}`, '_blank');
+    if (item.downloadUrl) {
+      window.open(item.downloadUrl, '_blank');
+    } else if (item.directUrl) {
+      window.open(`${SERVER_URL}/api/get-download-link?url=${encodeURIComponent(item.directUrl)}`, '_blank');
+    }
   }
 
   return { search, analyzeUrl, download };
